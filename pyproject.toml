@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "guardflow"
+version = "0.1.0"
+description = "Local-first runtime guardrails for LLM applications."
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+
+pii = [
+    "presidio-analyzer>=2.2.0",
+    "flair>=0.14.0"
+]
+
+injection = [
+    "transformers>=4.40.0",
+    "torch>=2.2.0"
+]
+
+secrets = [
+    "detect-secrets>=1.5.0"
+]
+
+all = [
+    "presidio-analyzer>=2.2.0",
+    "flair>=0.14.0",
+    "transformers>=4.40.0",
+    "torch>=2.2.0",
+    "detect-secrets>=1.5.0"
+]
+
+dev = [
+    "pytest>=8.0"
+]
+
+[tool.setuptools.packages.find]
+include = ["guardflow*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
