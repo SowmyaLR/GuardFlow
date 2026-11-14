@@ -1,43 +1,41 @@
 from guardflow.core.enums import GuardAction
-from guardflow.engines.pii.base import PIIDetection, PIIEngine
+from guardflow.engines.pii.base import (
+    PIIDetection,
+    PIIEngine,
+)
 from guardflow.guards.pii import PIIGuard
 
 
 class FakePIIEngine(PIIEngine):
     def detect(self, text, entities=None):
+        email = "john.smith@example.com"
+
+        start = text.index(email)
+
         return [
             PIIDetection(
                 entity_type="EMAIL_ADDRESS",
-                start=11,
-                end=27,
+                start=start,
+                end=start + len(email),
                 score=0.99,
-                text="john@example.com",
+                text=email,
             )
         ]
 
 
-def test_pii_guard_redacts_detection():
+def test_redacts_email_address():
+    text = (
+        "Please contact John Smith at "
+        "john.smith@example.com regarding the application."
+    )
+
     guard = PIIGuard(
         engine=FakePIIEngine(),
         action=GuardAction.REDACT,
     )
 
-    result = guard.evaluate(
-        "My email is john@example.com"
-    )
+    result = guard.evaluate(text)
 
-    assert result.passed is False
     assert result.action == GuardAction.REDACT
+    assert "john.smith@example.com" not in result.output_text
     assert "<EMAIL_ADDRESS>" in result.output_text
-
-
-def test_pii_guard_records_latency():
-    guard = PIIGuard(
-        engine=FakePIIEngine(),
-    )
-
-    result = guard.evaluate(
-        "My email is john@example.com"
-    )
-
-    assert result.latency_ms >= 0

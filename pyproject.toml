@@ -1,13 +1,52 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
+
 
 [project]
 name = "guardflow"
 version = "0.1.0"
-description = "Local-first runtime guardrails for LLM applications."
+description = "Local-first input guardrails for LLM applications."
+readme = "README.md"
 requires-python = ">=3.10"
+license = "Apache-2.0"
+
+authors = [
+    { name = "Sowmya LR" }
+]
+
+keywords = [
+    "llm",
+    "guardrails",
+    "ai-security",
+    "prompt-injection",
+    "pii",
+    "secrets",
+    "generative-ai",
+    "llm-security",
+    "input-validation"
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
+
 dependencies = []
+
+
+[project.urls]
+Homepage = "https://github.com/SowmyaLR/GuardFlow"
+Repository = "https://github.com/SowmyaLR/GuardFlow"
+Issues = "https://github.com/SowmyaLR/GuardFlow/issues"
+
 
 [project.optional-dependencies]
 
@@ -34,11 +73,17 @@ all = [
 ]
 
 dev = [
-    "pytest>=8.0"
+    "pytest>=8.0",
+    "build>=1.2",
+    "twine>=6.0"
 ]
+
 
 [tool.setuptools.packages.find]
 include = ["guardflow*"]
 
+
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = [
+    "tests"
+]

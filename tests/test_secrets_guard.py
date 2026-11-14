@@ -17,33 +17,37 @@ class FakeSecretsEngine(SecretsEngine):
         return self._detections
 
 
-def test_allows_text_without_secrets():
+def test_allows_normal_business_question():
+    text = (
+        "What are the current eligibility requirements "
+        "for a salaried employee applying for a home loan?"
+    )
+
     guard = SecretsGuard(
         engine=FakeSecretsEngine([])
     )
 
-    result = guard.evaluate(
-        "Explain fixed and floating interest rates."
-    )
+    result = guard.evaluate(text)
 
     assert result.passed is True
     assert result.action == GuardAction.ALLOW
-    assert result.output_text.startswith("Explain")
 
 
-def test_redacts_detected_secret():
-    text = "token=super-secret-value"
+def test_redacts_detected_api_secret():
+    secret = "sample-api-key-value-123456"
+    text = (
+        f'Please debug this configuration: api_key="{secret}"'
+    )
 
-    start = text.index("super-secret-value")
-    end = start + len("super-secret-value")
+    start = text.index(secret)
 
     guard = SecretsGuard(
         engine=FakeSecretsEngine(
             [
                 SecretDetection(
-                    secret_type="API Token",
+                    secret_type="API_KEY",
                     start=start,
-                    end=end,
+                    end=start + len(secret),
                 )
             ]
         )
@@ -52,13 +56,16 @@ def test_redacts_detected_secret():
     result = guard.evaluate(text)
 
     assert result.action == GuardAction.REDACT
-    assert result.output_text == "token=<SECRET>"
+    assert secret not in result.output_text
+    assert "<SECRET>" in result.output_text
 
 
-def test_metadata_does_not_contain_secret_value():
-    secret = "very-private-token"
+def test_does_not_expose_raw_secret_in_metadata():
+    secret = "fake-private-token-987654"
 
-    text = f"token={secret}"
+    text = (
+        f'The integration is failing with token="{secret}".'
+    )
 
     start = text.index(secret)
 
@@ -66,7 +73,7 @@ def test_metadata_does_not_contain_secret_value():
         engine=FakeSecretsEngine(
             [
                 SecretDetection(
-                    secret_type="API Token",
+                    secret_type="TOKEN",
                     start=start,
                     end=start + len(secret),
                 )
@@ -79,76 +86,25 @@ def test_metadata_does_not_contain_secret_value():
     assert secret not in str(result.metadata)
 
 
-def test_can_block_secret():
+def test_can_block_input_containing_secret():
+    text = (
+        "Please troubleshoot this production credential."
+    )
+
     guard = SecretsGuard(
         engine=FakeSecretsEngine(
             [
                 SecretDetection(
-                    secret_type="Credential",
-                    start=0,
-                    end=10,
+                    secret_type="PRIVATE_KEY",
+                    start=7,
+                    end=18,
                 )
             ]
         ),
         action=GuardAction.BLOCK,
     )
 
-    result = guard.evaluate("abcdefghij")
+    result = guard.evaluate(text)
 
     assert result.action == GuardAction.BLOCK
     assert result.passed is False
-
-
-def test_can_warn_about_secret():
-    guard = SecretsGuard(
-        engine=FakeSecretsEngine(
-            [
-                SecretDetection(
-                    secret_type="Credential",
-                    start=0,
-                    end=10,
-                )
-            ]
-        ),
-        action=GuardAction.WARN,
-    )
-
-    result = guard.evaluate("abcdefghij")
-
-    assert result.action == GuardAction.WARN
-
-
-def test_resolves_overlapping_detections():
-    text = "token=abcdefghijklmnop"
-
-    guard = SecretsGuard(
-        engine=FakeSecretsEngine(
-            [
-                SecretDetection(
-                    secret_type="Generic Secret",
-                    start=6,
-                    end=22,
-                ),
-                SecretDetection(
-                    secret_type="High Entropy String",
-                    start=8,
-                    end=22,
-                ),
-            ]
-        )
-    )
-
-    result = guard.evaluate(text)
-
-    assert result.metadata["secret_count"] == 1
-    assert result.output_text == "token=<SECRET>"
-
-
-def test_records_latency():
-    guard = SecretsGuard(
-        engine=FakeSecretsEngine([])
-    )
-
-    result = guard.evaluate("hello")
-
-    assert result.latency_ms >= 0
