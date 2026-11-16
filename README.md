@@ -1184,14 +1184,6 @@ Use clearly fake credentials for testing.
 
 ---
 
-# License
-
-GuardFlow is intended to be an open-source project.
-
-See the repository `LICENSE` file for the current license.
-
----
-
 # Project Philosophy
 
 GuardFlow is not trying to become another massive AI safety framework.
